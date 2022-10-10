@@ -1,0 +1,13 @@
+# Folders
+.idea/
+.vscode/
+data/
+log/
+src/__pycache__
+
+# files
+*.pyc
+*.jpg
+*.csv
+*.pdf
+*.xml
