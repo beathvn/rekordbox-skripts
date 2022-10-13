@@ -28,7 +28,7 @@ def convert_database():
     mark.write_log_message()
 
     # exporting the changed data into an xml, so that we can import it later into rekordbox
-    # mark.export_data_to_xml(args.output_file)
+    mark.export_data_to_xml(args.output_file)
 
 
 if __name__ == "__main__":
