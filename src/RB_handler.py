@@ -1,11 +1,17 @@
-from typing import Dict
-
 import xmltodict
 from datetime import date
 
 
 class RB_handler():
     def __init__(self, rb5_input_path: str, rb6_input_path: str, location_of_interest: str, keys_to_update: list) -> None:
+        """constructor of class
+
+        Args:
+            rb5_input_path (str): path to rekordbox 5 database (make sure it is in .xml format)
+            rb6_input_path (str): path to rekordbox 6 database (make sure it is in .xml format)
+            location_of_interest (str): the location where the music is stored. It is used to filter the songs
+            keys_to_update (list): provide the keys you want to update in rekordbox 6 based on rekordbox 5
+        """
         # reading the xml files into a pandas data series
         # NOTE: Columns which are not interesting, are already ignored
         self.rawdata_rb5 = self._get_input_data_from_xml(rb5_input_path)
@@ -28,10 +34,9 @@ class RB_handler():
 
         return
 
-    def write_log_message(self):
-
-        # writing the name of the files you changed to output
-        curr_date = date.today()
+    def write_log_message(self) -> None:
+        """writes the accumulated information (in the class intern dict) into a outfile
+        """
 
         # TODO: if the log folder doesn't exist, create it
         # open file in write mode
@@ -48,6 +53,11 @@ class RB_handler():
         return
 
     def update_rb6_according_to_5(self, number_of_tracks: int = -1) -> None:
+        """calls a function which updates the desired tracks and the playlists
+
+        Args:
+            number_of_tracks (int, optional): defines the number of tracks you want to update. If negative updates all tracks. Defaults to -1.
+        """
         indecies_of_rb5 = list(self.map_from_5_to_6.keys())
 
         # defining the keys for the output dict
@@ -69,7 +79,10 @@ class RB_handler():
 
         return
 
-    def _update_playlists(self):
+    def _update_playlists(self) -> None:
+        """updates the playlists on position 3 and 4 of the loaded data6 according to 5
+        """
+
         print('Converting playlists...')
 
         # in this dict we have as key the trackid of rb5 and value is key of rb6
@@ -104,7 +117,12 @@ class RB_handler():
 
         return
 
-    def _get_trackid_mapping(self):
+    def _get_trackid_mapping(self) -> dict:
+        """calculates and returns a dict to translate between the track ids from rekordbox 5 to 6
+
+        Returns:
+            dict: key is track id of rekordbox 5 and value is track id of rekordbox 6
+        """
         track_id_mapping = {}
         for curr_track_index in self.map_from_5_to_6:
             track_id_mapping[self.data5[curr_track_index]['@TrackID']
@@ -113,6 +131,12 @@ class RB_handler():
         return track_id_mapping
 
     def _update_file(self, index_rb5: int, index_rb6: int) -> None:
+        """updates the meta data of the given trakcs according to the keys_to_update information
+
+        Args:
+            index_rb5 (int): index of the desired track with the correct information
+            index_rb6 (int): index of the track you want to update
+        """
         # updating self.data6 accoring to self.data5
         correct_data = self.data5[index_rb5]
         data_to_update = self.data6[index_rb6]
@@ -151,12 +175,18 @@ class RB_handler():
         return
 
     def _generate_mapping_dict_from_5to6(self) -> None:
+        """generates and saves a dict which translates the index locations of the tracks.
+        key is the index of the track in rekordbox 5 and value is the index you can find the same track in the data of rekordbox 6
+        """
         rb5_index_to_location_dict = self._get_index_location_dict(
             self.data5)
         rb6_index_to_location_dict = self._get_index_location_dict(
             self.data6)
 
+        # init an empty dict
         map_from_5_to_6 = {}
+
+        # with this list we want to keep track of all the tracks which couldn't be mapped
         failed = []
         for curr_key_5 in rb5_index_to_location_dict:
             try:
@@ -176,7 +206,16 @@ class RB_handler():
 
         return
 
-    def _get_index_location_dict(self, data) -> Dict:
+    def _get_index_location_dict(self, data: list) -> dict:
+        """First the tracks are filtered based on the previously set location_of_interest information. 
+        Then sets up a dict to map the indecies to the corresponding @Location information
+
+        Args:
+            data (list): holds the information of all the tracks
+
+        Returns:
+            dict: key is the index and value the @Location information
+        """
         # finding all the songs, which are interesting-> the ones in the location starting_string
         interesting_indecies = []
         notinterested_indecies = []
@@ -198,12 +237,25 @@ class RB_handler():
 
         return mapped_dict
 
-    def _get_input_data_from_xml(self, filepath: str) -> Dict:
+    def _get_input_data_from_xml(self, filepath: str) -> dict:
+        """reading and parsing a xml file into a dict
+
+        Args:
+            filepath (str): path to the xml file you want to open and convert
+
+        Returns:
+            dict: the converted xml file as a dict
+        """
         with open(filepath, 'r') as xml_file:
             input_data = xmltodict.parse(xml_file.read())
             return input_data
 
     def export_data_to_xml(self, out_path: str) -> None:
+        """outputs the changed data into a xml again
+
+        Args:
+            out_path (str): filepath to where you want to change it
+        """
         print('Exporting to XML...')
         with open(out_path, 'w') as xml_outfile:
             xml_outfile.write(xmltodict.unparse(self.rawdata_rb6))
